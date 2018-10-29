@@ -2,7 +2,11 @@
 """
 Created on Thu Oct 25 18:59:51 2018
 
-
+Description: This program will parse through a text file containing IP addresses,
+                perform GeoIP and RDAP(Whois) lookups on each of those IPs, then
+                use that information to run a filtering tool to filter IPs based
+                on criteria such as the country that the IP cooresponds to or the
+                type of IP it is.
 
 @author: Maxwell McComb
 """
@@ -12,7 +16,6 @@ import json
 import ipwhois
 from ipwhois import IPWhois
 from guizero import App, PushButton, Text, Combo, TextBox, Window
-
 
 class Address:
     #constructor, accepts GeoIP lookup data and sets RDAP lookup data to the empty String
@@ -41,19 +44,21 @@ class Address:
     #prints GeoIP lookup data when called on by an IP Object  
     def printGeoIPData(self):
         s = "GeoIP Lookup Data:  " + "\nIP Address: " + self.ip_address
-        
         for i in range (len(geoCriteriaList)):
-            s = s + "\n" + geoCriteriaList[i] + ": " +  self.findField(geoCriteriaList[i]) 
+            try:
+                s = s + "\n" + geoCriteriaList[i] + ": " +  self.findField(geoCriteriaList[i]) 
+            except TypeError:
+                s = s + "\n" + geoCriteriaList[i] + ": "
         return s
         
     #prints RDAP lookup data when called on by an IP Object    
     def printRDAPData(self):
         s = "RDAP Lookup Data:  "
-        print(len(rdapCriteriaList))
         for i in range (len(rdapCriteriaList)):
-            print(i)
-            s = s + "\n" + rdapCriteriaList[i] + ": " +  self.findField(rdapCriteriaList[i])
-        print(s)
+            try:
+                s = s + "\n" + rdapCriteriaList[i] + ": " +  self.findField(rdapCriteriaList[i])
+            except TypeError:
+                s = s + "\n" + rdapCriteriaList[i] + ": "
         return s
     
     #uses the criteria to return which field is to be accessed when filtering
@@ -182,9 +187,7 @@ def printRDAPData(ip):
 
 #initializes a list of IP Objects with GeoIP and RDAP data stored in its fields           
 def initialize():
-    fileToSearch = 'list_of_ips.txt'
-    ip_addresses = findIPAddresses(fileToSearch) #list of IP addresses found in text file
-    for i in range(10): #would use len(ip_addresses) instead of 10 but the lookups are very 
+    for i in range(15): #would use len(ip_addresses) instead of 15 but the lookups are very 
                         #   inefficient and take a long time to compute
         a = (geoIP_lookup(ip_addresses[i]))
 #        a = Address("", "", "", "", "", "", "", "", "", "", "", "", "", "", "") #if user only wants RDAP data
@@ -212,9 +215,7 @@ def handleFilterButton():
 
 #prints the GeoIP lookup data to a new window    
 def handleGeoButton():
-    tempIndex = ipIndexTextBox.value
-    index = int(tempIndex)
-    print (index)
+    index = int(ipIndexTextBox.value)
     if(index > len(ip_objects)):
         geoWText.append("Invalid Index")
     else:
@@ -251,12 +252,16 @@ rdapCriteriaList = ["ASN","ASN Routing Block","ASN Country Code","ASN Date",
                     "ASN Registry","ASN Description","Start Address","End Address",
                     "Handle","Parent Handle","IP Version","Name"]
 
-initialize()
+fileToSearch = 'list_of_ips.txt'
+ip_addresses = findIPAddresses(fileToSearch) #list of IP addresses found in text file
+initialize() # initializes data for the IPs
+
+#---------------------------------------------------------------------------#
 
 ##code to run guizero gui
 # basic initializations and instructions
 app = App(title="Filter Tool")
-instructionText = Text(app, text = "Instructions: Select a criteria to filter by, then \nenter a value that you want the IP addresses\n to be filtered by. Or put in a list index and press \none of the 'show' buttons to display data", size = 10)
+instructionText = Text(app, text = "Instructions: Select a criteria to filter by, then \nenter a value that you want the IP addresses\n to be filtered by. Or put in a list index in the first field \nprovided below and press one of the 'show' buttons to display data", size = 10)
 # initializing GeoIP and RDAP lookup data windows and buttons to open them
 ipIndexTextBox = TextBox(app)
 geoDataButton = PushButton(app, text = "Show GeoIP Data", command = handleGeoButton)
@@ -275,8 +280,10 @@ valueTextBox = TextBox(app, width = 40)
 filterButton = PushButton(app, command = handleFilterButton, text = "Filter")
 resultText = Text(app, size = 8)
 app.display()   
-    
-##test for one IP Object
+ 
+#------------------------------------------------------------------------#
+#Some Test Code   
+##test for one IP Object. Could use any number between 0-4999 for index
 #fileToSearch = 'list_of_ips.txt'
 #ip_addresses = findIPAddresses(fileToSearch)
 #a = (geoIP_lookup(ip_addresses[567]))
@@ -286,12 +293,21 @@ app.display()
 #print(tempGeoData)
 #print(tempRDAPData)
 
+#------------------------------------#
 ##filter test without using app
 #filteredList = filterBy("IP Type", "Residential")
-#print(filteredList)
+#print("Filtered List: ", filteredList)
 #for i in range(len(filteredList)):
-#    printGeoData(filteredList[i])
+#    s = printGeoData(filteredList[i])
+#    print(s)
 
+#-------------------------------------#
+##Another filter test without using app
+#filteredList = filterBy("Country", "Spain")
+#print("Filtered List: ", filteredList)
+#for i in range(len(filteredList)):
+#    s = printGeoData(filteredList[i])
+#    print(s)
   
 
  
